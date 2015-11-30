@@ -26,6 +26,17 @@
         "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
       }
     },
+     "location": {
+      "type": "string",
+      "defaultValue": "West Us",
+      "allowedValues": [
+        "west us",
+        "East Us 2"
+      ],
+       "metadata": {
+        "description": "restritcs choices to where the vm can be deployed in the us."
+      }
+    }
     "windowsOSVersion": {
       "type": "string",
       "defaultValue": "2012-R2-Datacenter",
@@ -37,10 +48,21 @@
       "metadata": {
         "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
       }
+    },
+    "sizeOfEachDataDiskInGb":{
+      "type": "string",
+      "metadata": {
+        "description": "Size of each data disk in GB"
+      }
+      }
+    },
+  }, "metadata": {
+        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
+      }
     }
   },
   "variables": {
-    "location": "West US",
+   
     "imagePublisher": "MicrosoftWindowsServer",
     "imageOffer": "WindowsServer",
     "OSDiskName": "osdiskforwindowssimple",
@@ -57,13 +79,14 @@
     "virtualNetworkName": "MyVNET",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]"
+    "dataDick1VhdName": "[concat('http://',parameters('newStorageAccountName'), '.blobl.core.windows.net/',variables('vmStoreageAccountContainerName'), '/' ,variables('vmName'), 'DataDick1.vhd')]"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('newStorageAccountName')]",
       "apiVersion": "2015-05-01-preview",
-      "location": "[variables('location')]",
+      "location": "[parimiters('location')]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
       }
@@ -72,7 +95,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[variables('location')]",
+      "location": "[parimiters('location')]",
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
@@ -84,7 +107,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[variables('location')]",
+      "location": "[parimiters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -105,7 +128,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
-      "location": "[variables('location')]",
+      "location": "[parimiters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
@@ -131,7 +154,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
-      "location": "[variables('location')]",
+      "location": "[parimiters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
@@ -161,6 +184,18 @@
             "createOption": "FromImage"
           }
         },
+        "dataDisks": [
+          {
+            "name": "datadisk1",
+            "diskSizeGB": "[parameters('sizeOfDiskInGb')]",
+            "lun": 0,
+            "vhd": {
+              "uri": "[variables('datadisk1VhdName')]"
+            },
+            "createOpion": "Empty"
+            }
+        ]
+      },
         "networkProfile": {
           "networkInterfaces": [
             {
